@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.SpringLeaf"  parent="Theme.AppCompat">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+</resources>

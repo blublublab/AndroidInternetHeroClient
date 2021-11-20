@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SpringLeaf</string>
+    <string name="enter_to_the_game">Register</string>
+    <string name="password">Password</string>
+    <string name="server_url">https://springsestem.herokuapp.com/</string>
+    <string name="server_url_game">ws://springsestem.herokuapp.com/ws/websocket</string>
+    <string name="input_hero_name">Input hero name</string>
+    <string name="create_new_hero">Create new Hero</string>
+    <string name="server_id">514531410363-m1tscrtkit0ipb18n9dicii3ctj6pgfr.apps.googleusercontent.com</string>
+</resources>
