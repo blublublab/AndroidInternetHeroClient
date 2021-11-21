@@ -1,5 +1,7 @@
 package com.yainnixdev.internethero.creatures.appearence.parts
 
+import com.yainnixdev.internethero.creatures.appearence.parts.cloth.ClothColor
+
 enum class HeaddressType(){
     HAT_COWBOY,
     HAT_LUCKY,

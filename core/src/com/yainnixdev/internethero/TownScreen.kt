@@ -7,15 +7,12 @@ import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL30
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.TextureAtlas
-import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.TmxMapLoader
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.utils.Array
 import com.badlogic.gdx.utils.viewport.FitViewport
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -23,6 +20,7 @@ import com.yainnixdev.internethero.creatures.Creature
 import com.yainnixdev.internethero.creatures.Hero
 import com.yainnixdev.internethero.creatures.appearence.HeroLook
 import com.yainnixdev.internethero.creatures.appearence.parts.*
+import com.yainnixdev.internethero.creatures.appearence.parts.cloth.*
 import com.yainnixdev.internethero.entities.DtoClasses
 import com.yainnixdev.internethero.entities.GameObject
 import com.yainnixdev.internethero.utils.*
@@ -50,20 +48,14 @@ class TownScreen(
     private val uiStage : Stage
     private val uiCamera = OrthographicCamera()
 
-
-
     private val map : TiledMap
     private val mapRenderer : OrthogonalTiledMapRenderer
     private val shapeRenderer : ShapeRenderer = ShapeRenderer()
-
-    private lateinit  var chatTexture: Texture
-    private lateinit  var chatBorderTexture : Texture
 
     private val token = additionalData?.get("token").toString()
     private lateinit var stompSession : StompSession
     private val gson = GsonBuilder().setLenient().create()
     init {
-        initSprites()
         setStompClient()
         screenSize = Point(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat() )
         gameCamera.setToOrtho(false , screenSize.x, screenSize.y)
@@ -102,26 +94,44 @@ class TownScreen(
             projectionMatrix = gameCamera.combined;
             begin()
             serverHeroes.forEach { hero ->
-                with(hero.point) {
-                    //Draw nicknames
-                    mainScreen.nickNameFont?.draw(this@apply, hero.heroName,
-                        x + HERO_SIZE / 6,
-                        y + HERO_SIZE + (mainScreen.nickNameFont?.lineHeight?.div(2) ?: 0F))
-                    //Draw animations
-                    for(animation in hero.getCurrentAnimations()){
-                        draw(animation.getKeyFrame(stateTime, hero.moveJob != null), hero.gameRectangle!!)
-                    }
+                //Draw animations
+                for(animation in hero.animation){
+                    draw(animation.getKeyFrame(
+                        // If hero is not moving set it texture to 1 frame = Animation_speed/2
+                        // Didn't added new variable because of  possible performance issues
+                        if(hero.moveJob == null) ANIMATION_SPEED/2 else stateTime,
+                        hero.moveJob != null), hero.gameRectangle!!)
+
                 }
-            gameObjects.forEach { draw(it.texture, it.rectangle) }
+                /*    with(hero.point) {
+            //Draw nicknames
+            mainScreen.nickNameFont?.draw(this@apply, hero.heroName,
+                x + HERO_SIZE / 6,
+                y + HERO_SIZE + (mainScreen.nickNameFont?.lineHeight?.div(2) ?: 0F))
+
+        }*/
             }
+            gameObjects.forEach { draw(it.texture, it.rectangle) }
             end()
         }
-
         drawHeroRect()
-
         drawUI()
     }
-
+    private fun addHero(inputHero:  Hero): Hero {
+        with(inputHero){
+            gameRectangle = GameRectangle(point.x, point.y)
+            inputHero.heroLook = HeroLook(
+                heroModel = 0,
+                HeroAction.WALK,
+                Hair(HairType.GENTLEMAN, HairColor.BROWN),
+                accessory =  Accessory(
+                    glasses = ClothColor.PINK),
+                cloth = Cloth(shirt = Shirt(shirtType = ClothShirt.BASIC, ClothColor.PINK), shoes = ClothColor.PINK, pants = Pants(ClothPants.PANTS, ClothColor.BLUE)))
+            inputHero.appearanceChanged()
+            serverHeroes.add(this)
+            return this
+        }
+    }
     private fun drawHeroRect(){
         shapeRenderer.projectionMatrix = gameCamera.combined
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line)
@@ -154,26 +164,8 @@ class TownScreen(
         uiBatch.end()
     }
 
-    private fun addHero(inputHero:  Hero): Hero {
-        with(inputHero){
-            gameRectangle = GameRectangle(point.x, point.y)
-            inputHero.heroLook = HeroLook(
-                heroModel = 0,
-                HeroAction.WALK,
-                Hair(HairType.EXTRALONG, HairColor.BLONDE),
-                accessory = Accessory(ClothColor.RED, HairColor.EMERALD, ))
 
-            serverHeroes.add(this)
-            return this
-        }
-    }
 
-    private fun initSprites(){
-
-        chatTexture = Texture(Gdx.files.internal("ui/chat_box.png"))
-        chatBorderTexture = Texture(Gdx.files.internal("ui/chat_box_border.png"))
-
-    }
 
 
     private fun heroColliding() = gameObjects
@@ -189,7 +181,6 @@ class TownScreen(
         Gdx.input.inputProcessor = object : InputProcessor {
             override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
                 userHero.stopMoving()
-
                 val moveIntention = Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0F)
                 gameCamera.unproject(moveIntention)
 
@@ -217,24 +208,15 @@ class TownScreen(
             }
 
             override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
-                //TODO: Fix bug of moving here
-                /*  userHero.stopMoving()
-                val clickPoint = GridPoint2(screenX,  abs(screenY - screenSize.y) )
-                userHero.startMoving(clickPoint)*/
                 return true
             }
 
-            override fun keyDown(keycode: Int): Boolean {
-                return false
-            }
 
-            override fun keyUp(keycode: Int): Boolean {
-                return false
-            }
-
-            override fun mouseMoved(screenX: Int, screenY: Int): Boolean = false
-            override fun keyTyped(character: Char): Boolean  = false
-            override fun scrolled(amountX: Float, amountY: Float): Boolean = false
+            override fun keyDown(keycode: Int) = false
+            override fun keyUp(keycode: Int) = false
+            override fun mouseMoved(screenX: Int, screenY: Int) = false
+            override fun keyTyped(character: Char) = false
+            override fun scrolled(amountX: Float, amountY: Float) = false
         }
     }
 
@@ -268,7 +250,7 @@ class TownScreen(
 
 
     private fun writeCell(point: Point, gameObject: GameObject){
-    // Send Retrofit call , that returns or empty string , or cause of can't writing cell
+    //TODO :  Send Retrofit call , that returns or empty string , or cause of can't writing cell
 
     }
 
@@ -315,23 +297,18 @@ class TownScreen(
        userHero.stopMoving()
     }
 
-    override fun resume() {
-
-    }
-
-    override fun hide() {
-
-    }
-
 
     override fun dispose() {
         map.dispose()
         mapRenderer.dispose()
         uiStage.dispose()
+        shapeRenderer.dispose()
+      //  mainScreen.dispose()
     }
 
-    override fun show() {
-    }
+    override fun resume() = Unit
+    override fun hide() = Unit
+    override fun show() = Unit
 
 }
 

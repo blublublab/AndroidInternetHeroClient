@@ -15,7 +15,7 @@ abstract class Creature(
     var gameRectangle: GameRectangle? = null,
     var point: Point = Point(),
     var collidingListener: CreatureCollidingListener? = null
-    )  : CreatureCollidingListener, AnimatedCreature {
+    )  : CreatureCollidingListener , CreatureStateChangedListener{
     companion object {
        const val  CREATURE_SPEED = 2F
     }
@@ -32,13 +32,14 @@ abstract class Creature(
     }
 
     fun startMoving(moveIntention: Point) {
+
         val centralizedPoint = gameRectangle?.getCenter() ?: Point(0F, 0F)
         val pathDirection = getDirectionVector(moveIntention, centralizedPoint)
 
         direction = getDirection(moveIntention, centralizedPoint)
         moveVector = Point(pathDirection.x * CREATURE_SPEED,  pathDirection.y * CREATURE_SPEED)
         moveJob = gameScope.updateAtFixedRateAsync({ move(moveVector) }, 40)
-
+        appearanceChanged()
     }
     fun stopMoving() {
         moveJob?.cancel()
