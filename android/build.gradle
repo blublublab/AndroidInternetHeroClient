@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
 }
 android {
+
     compileSdkVersion 31
     buildToolsVersion "30.0.3"
     defaultConfig {
@@ -18,7 +19,12 @@ android {
     buildFeatures {
         viewBinding true
     }
-
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+        }
+    }
     packagingOptions {
         exclude 'META-INF/robovm/ios/robovm.xml'
     }

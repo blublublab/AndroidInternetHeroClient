@@ -8,9 +8,12 @@ import com.badlogic.gdx.graphics.GL30
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.maps.MapObjects
+import com.badlogic.gdx.maps.objects.PolygonMapObject
 import com.badlogic.gdx.maps.tiled.TiledMap
 import com.badlogic.gdx.maps.tiled.TmxMapLoader
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer
+import com.badlogic.gdx.math.Polygon
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.utils.viewport.FitViewport
@@ -60,7 +63,7 @@ class TownScreen(
         screenSize = Point(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat() )
         gameCamera.setToOrtho(false , screenSize.x, screenSize.y)
         shapeRenderer.color = Color.RED
-
+        MusicHandler.playMusicList()
 /*
         val plant = Plant(32, 32, Plant.PlantType.CARROT,rectangle =
         GameRectangle(1600F, 1600F))
@@ -70,13 +73,22 @@ class TownScreen(
 
         gameObjects.add(plant)*/
 
-        map = TmxMapLoader().load("map/map_town.tmx")
+        map = TmxMapLoader().load("map/town.tmx")
         mapRenderer = OrthogonalTiledMapRenderer(map , 1F)
+
+        val collisionLayer  = map.layers["building_collisions"]
+
+        val collisionsObjects = collisionLayer.objects
+
+        for(polygonObject in collisionsObjects.getByType(PolygonMapObject::class.java)){
+            val polygon = polygonObject.polygon
+            println("poly ${polygon.boundingRectangle}")
+        }
+
         uiStage = Stage(FitViewport(screenSize.x, screenSize.y, uiCamera))
         userHero = Gson().fromJson(additionalData?.get("user_hero").toString(), Hero::class.java)
         userHero.direction = Creature.CreatureDirection.DOWN
         addHero(userHero)
-
         initInput()
     }
 
@@ -119,6 +131,7 @@ class TownScreen(
     }
     private fun addHero(inputHero:  Hero): Hero {
         with(inputHero){
+            point = Point(206F,180F)
             gameRectangle = GameRectangle(point.x, point.y)
             inputHero.heroLook = HeroLook(
                 heroModel = 0,
@@ -163,9 +176,6 @@ class TownScreen(
 
         uiBatch.end()
     }
-
-
-
 
 
     private fun heroColliding() = gameObjects
@@ -264,16 +274,14 @@ class TownScreen(
 
                 stompSession.subscribeText("/topic/get_position")
                     .collect {
-                        println("topic : $it")
                         updateHeroList(gson.fromJson(it, DtoClasses.HeroDto::class.java)) }
                 stompSession.subscribeText("/topic/get_message")
                     .collect {
-                        println("topic: $it")
                         //printMessage(gson.fromJson(it, ChatMessage::class.java))
                     }
                  stompSession.subscribeText("/topic/get_cells")
                      .collect {
-                         println()
+
                      }
              }
     }
@@ -303,6 +311,8 @@ class TownScreen(
         mapRenderer.dispose()
         uiStage.dispose()
         shapeRenderer.dispose()
+        MusicHandler.dispose()
+
       //  mainScreen.dispose()
     }
 

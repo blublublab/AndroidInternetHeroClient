@@ -32,7 +32,6 @@ object SpriteHandler {
     fun getAnimation(pair: Pair<String, Int?>, heroAction: HeroAction) =
         pair.second?.let {
             val path = "${heroAction.name.lowercase()} ${pair.first.replace("_", " ").lowercase()}"
-            println(path)
             heroAtlas.findRegions(path)?.get(it)
         }
 

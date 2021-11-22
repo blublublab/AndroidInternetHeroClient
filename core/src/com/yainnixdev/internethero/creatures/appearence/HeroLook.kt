@@ -73,7 +73,7 @@ class HeroLook(
         getAnimation(Pair("beard", accessory.beard?.ordinal), heroAction)?.let { textures.add(it) }
 
         // no shoes in folder wtf?
-      //  getAnimation(Pair("shoes", cloth.shoes?.ordinal), heroAction)?.let { textures.add(it) }
+       //  getAnimation(Pair("shoes", cloth.shoes?.ordinal), heroAction)?.let { textures.add(it) }
 
 
         val textureGdxArray = textures.map { texture ->  texture
